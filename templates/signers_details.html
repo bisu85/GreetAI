@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Greet-AI</title>
+</head>
+<body>
+    <h1>Fill in details of signatories</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+
+        <div>
+            {{ form.text_input_name1.label }}
+            {{ form.text_input_name1() }}
+        </div>
+
+        <div>
+            {{ form.text_input_email1.label }}
+            {{ form.text_input_email1() }}
+        </div>
+
+        <div>
+            {{ form.text_input_name2.label }}
+            {{ form.text_input_name2() }}
+        </div>
+
+        <div>
+            {{ form.text_input_email2.label }}
+            {{ form.text_input_email2() }}
+        </div>        
+
+        <div>
+            <input type="submit" value="send card for signatures">
+        </div>
+    </form>
+</body>
+</html>
+

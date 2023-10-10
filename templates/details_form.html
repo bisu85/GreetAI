@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Greet-AI</title>
+</head>
+<body>
+    <h1>Fill in settings for AI Card generation</h1>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+
+        <div>
+            {{ form.text_input_name.label }}
+            {{ form.text_input_name() }}
+        </div>
+
+
+        <div>
+            {{ form.dropdown_occassion.label }}
+            {{ form.dropdown_occassion() }}
+        </div>
+
+
+        <div>
+            {{ form.text_input_age.label }}
+            {{ form.text_input_age() }}
+        </div>
+
+
+        <div>
+            {{ form.dropdown_season.label }}
+            {{ form.dropdown_season() }}
+        </div>
+        
+
+        <div>
+            {{ form.dropdown_specials.label }}
+            {{ form.dropdown_specials() }}
+        </div>
+
+        <div>
+            <input type="submit" value="Generate AI quote and card image">
+        </div>
+    </form>
+</body>
+</html>
+
