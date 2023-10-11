@@ -254,5 +254,5 @@ if __name__ == '__main__':
         signature_request_api = apis.SignatureRequestApi(api_client)
         #app.run()
         #serve(app, host='127.0.0.1', port=8000)
-        serve(app, host='0.0.0.0', port=int(os.environ.get('PORT', 8000))
+        serve(app, host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))
 
