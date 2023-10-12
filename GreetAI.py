@@ -93,12 +93,12 @@ def process_text(prompt):
     user_input = request.form.get('user_input')
     # Do something with the user_input, e.g., process it or display it
     
-    pdf_file = "D:/GreetAI/Greetings.pdf"
+    pdf_file = "Greetings.pdf"
     c = canvas.Canvas(pdf_file, pagesize=letter)
 
-    #generate_and_save_image(prompt, 'D:/GreetAI/generated.png')
+    #generate_and_save_image(prompt, 'generated.png')
 
-    image_path = "D:/GreetAI/generated.png"  # Replace with the path to your image file
+    image_path = "generated.png"  # Replace with the path to your image file
     img = utils.ImageReader(image_path)
     c.drawImage(img, 200, 400, 256, 256)  # Adjust coordinates and dimensions as needed
 
@@ -167,7 +167,7 @@ def generate_and_save_image(prompt, filename):
 
     image_data = requests.get(image_url, stream=True) 
 
-    with open("D:/GreetAI/generated.png", "wb") as f: 
+    with open("generated.png", "wb") as f: 
         f.write(image_data.content)
 
 @app.route('/upload_to_sign')
@@ -213,7 +213,7 @@ def process_upload_to_sign(name1, email1, name2, email2):
         #     "lawyer1@dropboxsign.com",
         #     "lawyer2@dropboxsign.com",
         # ],
-        files=[open("D:/GreetAI/Greetings.pdf", "rb")],
+        files=[open("Greetings.pdf", "rb")],
         metadata={
             "custom_id": 1234,
             "custom_text": "NDA #9",
@@ -243,7 +243,7 @@ def process_download_from_sign():
     try:
         signature_request_id = '243c1ae3d46d3d81e0568ec6d76c0a186d2ad5c9'
         response = signature_request_api.signature_request_files(signature_request_id, file_type="pdf")
-        open('D:/GreetAI/signed-Greetings.pdf', 'wb').write(response.read())
+        open('signed-Greetings.pdf', 'wb').write(response.read())
     except ApiException as e:
         print("Exception when calling Dropbox Sign API: %s\n" % e)
     return f"Success !"
