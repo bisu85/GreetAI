@@ -103,8 +103,8 @@ def process_text(prompt):
     c.drawImage(img, 200, 400, 256, 256)  # Adjust coordinates and dimensions as needed
 
     birthday_prompt = "Generate a " + session['receiver_occassion'] + " quote: May your day be filled with joy and laughter, as bright as the candles on your cake."
-    generated_quote = generate_quote(birthday_prompt)
-    #generated_quote = birthday_prompt
+    #generated_quote = generate_quote(birthday_prompt)
+    generated_quote = birthday_prompt
 
     #c.drawString(100, 750, user_input)
     TitleText = "Happy " + session['receiver_occassion'] + " " + session['receiver_name'] + " !!"
