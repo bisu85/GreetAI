@@ -96,7 +96,7 @@ def process_text(prompt):
     pdf_file = "D:/GreetAI/Greetings.pdf"
     c = canvas.Canvas(pdf_file, pagesize=letter)
 
-    generate_and_save_image(prompt, 'D:/GreetAI/generated.png')
+    #generate_and_save_image(prompt, 'D:/GreetAI/generated.png')
 
     image_path = "D:/GreetAI/generated.png"  # Replace with the path to your image file
     img = utils.ImageReader(image_path)
@@ -254,5 +254,6 @@ if __name__ == '__main__':
         signature_request_api = apis.SignatureRequestApi(api_client)
         #app.run()
         #serve(app, host='127.0.0.1', port=8000)
-        serve(app, host='0.0.0.0', port=int(os.environ.get('PORT', 8000)))
+        serve(app, host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
+
 
