@@ -37,6 +37,8 @@ api_key = 'sk-GurZp8sVVbWNZYEYEfpxT4BlbkFJWEhF9SmmTKxqpN7svFpB'
 
 app = Flask(__name__)   
 app.secret_key = 'b10e5928d7f81eba2c6368cd963a5f6d'
+app.config['UPLOAD_FOLDER'] = 'uploads'  # Set the directory where images will be stored.
+
 
 # receiver_name = "Unknown"
 # receiver_occassion = "Unknown"
@@ -95,23 +97,35 @@ def signers_details():
 def text_box_form():
     return render_template('text_box.html')
 
+def create_directory():
+    directory_path = app.config['UPLOAD_FOLDER']
+
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+
+    user_directory_path = session['user_input_dropbox_api_key']
+    if not os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], session['user_input_dropbox_api_key'])):
+        os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], session['user_input_dropbox_api_key']))
+    
+
 #@app.route('/process_text', methods=['POST'])
 def process_text(prompt):
     user_input = request.form.get('user_input')
     # Do something with the user_input, e.g., process it or display it
     
-    pdf_file = "Greetings.pdf"
+    create_directory()
+    pdf_file = os.path.join(app.config['UPLOAD_FOLDER'], session['user_input_dropbox_api_key'], "Greetings.pdf")
     c = canvas.Canvas(pdf_file, pagesize=letter)
 
-    #generate_and_save_image(prompt, 'generated.png')
+    generate_and_save_image(prompt, os.path.join(app.config['UPLOAD_FOLDER'], session['user_input_dropbox_api_key'], "generated.png"))
 
-    image_path = "generated.png"  # Replace with the path to your image file
+    image_path = os.path.join(app.config['UPLOAD_FOLDER'], session['user_input_dropbox_api_key'], "generated.png")  # Replace with the path to your image file
     img = utils.ImageReader(image_path)
     c.drawImage(img, 200, 400, 256, 256)  # Adjust coordinates and dimensions as needed
 
     birthday_prompt = "Generate a " + session['receiver_occassion'] + " quote: May your day be filled with joy and laughter, as bright as the candles on your cake."
     generated_quote = generate_quote(birthday_prompt)
-    generated_quote = birthday_prompt
+    #generated_quote = birthday_prompt
 
     #c.drawString(100, 750, user_input)
     TitleText = "Happy " + session['receiver_occassion'] + " " + session['receiver_name'] + " !!"
@@ -174,7 +188,7 @@ def generate_and_save_image(prompt, filename):
 
     image_data = requests.get(image_url, stream=True) 
 
-    with open("generated.png", "wb") as f: 
+    with open(os.path.join(app.config['UPLOAD_FOLDER'], session['user_input_dropbox_api_key'], "generated.png"), "wb") as f: 
         f.write(image_data.content)
 
 @app.route('/upload_to_sign')
@@ -224,7 +238,7 @@ def process_upload_to_sign(name1, email1, name2, email2):
             #     "lawyer1@dropboxsign.com",
             #     "lawyer2@dropboxsign.com",
             # ],
-            files=[open("Greetings.pdf", "rb")],
+            files=[open(os.path.join(app.config['UPLOAD_FOLDER'], session['user_input_dropbox_api_key'], "Greetings.pdf"), "rb")],
             metadata={
                 "custom_id": 1234,
                 "custom_text": "NDA #9",
@@ -262,7 +276,7 @@ def process_download_from_sign():
         try:
             #signature_request_id = '243c1ae3d46d3d81e0568ec6d76c0a186d2ad5c9'
             response = signature_request_api.signature_request_files(session['signature_request_id'], file_type="pdf")
-            open('signed-Greetings.pdf', 'wb').write(response.read())
+            open(os.path.join(app.config['UPLOAD_FOLDER'], session['user_input_dropbox_api_key'], "signed-Greetings.pdf"), 'wb').write(response.read())
         except ApiException as e:
             print("Exception when calling Dropbox Sign API: %s\n" % e)
         return f"Success !"
