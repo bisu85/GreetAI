@@ -1,6 +1,6 @@
 from waitress import serve
 import os
-from flask import Flask, render_template, request, session
+from flask import Flask, render_template, request, session, redirect, url_for
 from flask_wtf import FlaskForm
 
 from wtforms import SelectField
@@ -24,26 +24,33 @@ from PIL import Image
 import requests 
 
 #add your openai api key
-api_key = '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'
+api_key = 'sk-GurZp8sVVbWNZYEYEfpxT4BlbkFJWEhF9SmmTKxqpN7svFpB'
 
 
-configuration = Configuration(
-    # Configure HTTP basic authorization: api_key
-    username="086d082524f570dcc388273267a37577fe96e122148a25baa52acdfa8bfacb78",
+# configuration = Configuration(
+#     # Configure HTTP basic authorization: api_key
+#     username="086d082524f570dcc388273267a37577fe96e122148a25baa52acdfa8bfacb78",
 
-    # or, configure Bearer (JWT) authorization: oauth2
-    # access_token="YOUR_ACCESS_TOKEN",
-)
+#     # or, configure Bearer (JWT) authorization: oauth2
+#     # access_token="YOUR_ACCESS_TOKEN",
+# )
 
-app = Flask(__name__)
+app = Flask(__name__)   
 app.secret_key = 'b10e5928d7f81eba2c6368cd963a5f6d'
 
 # receiver_name = "Unknown"
 # receiver_occassion = "Unknown"
 
-@app.route('/')
-def hello_world():
-    return 'Welcome to GreetAI'
+@app.route('/', methods=['GET'])
+def Landing():
+    return render_template('Landing.html')
+
+@app.route('/process_text', methods=['POST'])
+def process_text():
+    session['user_input_openai_api_key'] = request.form['user_input_openai_api_key']
+    session['user_input_dropbox_api_key'] = request.form['user_input_dropbox_api_key']
+    return redirect(url_for('details_form'))
+    #return f"Success !!" 
 
 # Create a form with a textbox and a dropdown
 class MyForm(FlaskForm):
@@ -64,7 +71,7 @@ def details_form():
         prompt = form.dropdown_occassion.data + "card for a " + form.text_input_age.data + "years old"
         prompt += form.dropdown_season.data + "theme and colors and lots of" + form.dropdown_specials.data + "."
         process_text(prompt)
-        return f"Success !!"
+        return redirect(url_for('signers_details'))
 
     return render_template('details_form.html', form=form)
 
@@ -80,7 +87,7 @@ def signers_details():
 
     if form.validate_on_submit():
         process_upload_to_sign (form.text_input_name1.data, form.text_input_email1.data, form.text_input_name2.data, form.text_input_email2.data)
-        return f"Success !"
+        return redirect(url_for('download_from_sign'))
 
     return render_template('signers_details.html', form=form)
 
@@ -103,7 +110,7 @@ def process_text(prompt):
     c.drawImage(img, 200, 400, 256, 256)  # Adjust coordinates and dimensions as needed
 
     birthday_prompt = "Generate a " + session['receiver_occassion'] + " quote: May your day be filled with joy and laughter, as bright as the candles on your cake."
-    #generated_quote = generate_quote(birthday_prompt)
+    generated_quote = generate_quote(birthday_prompt)
     generated_quote = birthday_prompt
 
     #c.drawString(100, 750, user_input)
@@ -137,7 +144,7 @@ def process_text(prompt):
     return f'You entered: {user_input}'
 
 def generate_quote(prompt):
-    openai.api_key = api_key
+    openai.api_key = session['user_input_openai_api_key']
 
     # Generate a birthday quote using the GPT-3 model
     completion = openai.ChatCompletion.create(
@@ -159,7 +166,7 @@ def generate_and_save_image(prompt, filename):
         prompt=prompt,
         n=1,  # Number of images to generate
         size="256x256",  # Size of the generated image
-        api_key=api_key
+        api_key=session['user_input_openai_api_key']
     )
     #print(response)
     # Extract the image data from the response's 'data' attribute
@@ -177,60 +184,64 @@ def upload_to_sign():
 @app.route('/process_upload_to_sign', methods=['POST'])
 def process_upload_to_sign(name1, email1, name2, email2):
 
-    # with ApiClient(configuration) as api_client:
-    #     signature_request_api = apis.SignatureRequestApi(api_client)
-
-    signer_1 = models.SubSignatureRequestSigner(
-        email_address=email1,
-        name=name1,
-        order=0,
+    configuration = Configuration(
+        # Configure HTTP basic authorization: api_key
+        username=session['user_input_dropbox_api_key'],
     )
+    with ApiClient(configuration) as api_client:
+        signature_request_api = apis.SignatureRequestApi(api_client)
 
-    # signer_2 = models.SubSignatureRequestSigner(
-    #     email_address=email2,
-    #     name=name2,
-    #     order=1,
-    # )
+        signer_1 = models.SubSignatureRequestSigner(
+            email_address=email1,
+            name=name1,
+            order=0,
+        )
 
-    signing_options = models.SubSigningOptions(
-        draw=True,
-        type=True,
-        upload=True,
-        phone=True,
-        default_type="draw",
-    )
+        # signer_2 = models.SubSignatureRequestSigner(
+        #     email_address=email2,
+        #     name=name2,
+        #     order=1,
+        # )
 
-    # field_options = models.SubFieldOptions(
-    #     date_format="DD - MM - YYYY",
-    # )
-    data = models.SignatureRequestSendRequest(
-        title="Happy " + session['receiver_occassion'] + " " + session['receiver_name'],
-        subject="Sign " + session['receiver_occassion'] + " Card",
-        message="Please sign this " + session['receiver_occassion'] + " card with best wishes",
-        #signers=[signer_1, signer_2],
-        signers=[signer_1],
-        # cc_email_addresses=[
-        #     "lawyer1@dropboxsign.com",
-        #     "lawyer2@dropboxsign.com",
-        # ],
-        files=[open("Greetings.pdf", "rb")],
-        metadata={
-            "custom_id": 1234,
-            "custom_text": "NDA #9",
-        },
-        signing_options=signing_options,
-        #field_options=field_options,
-        test_mode=True,
-    )
+        signing_options = models.SubSigningOptions(
+            draw=True,
+            type=True,
+            upload=True,
+            phone=True,
+            default_type="draw",
+        )
 
-    global signature_request_id
+        # field_options = models.SubFieldOptions(
+        #     date_format="DD - MM - YYYY",
+        # )
+        data = models.SignatureRequestSendRequest(
+            title="Happy " + session['receiver_occassion'] + " " + session['receiver_name'],
+            subject="Sign " + session['receiver_occassion'] + " Card",
+            message="Please sign this " + session['receiver_occassion'] + " card with best wishes",
+            #signers=[signer_1, signer_2],
+            signers=[signer_1],
+            # cc_email_addresses=[
+            #     "lawyer1@dropboxsign.com",
+            #     "lawyer2@dropboxsign.com",
+            # ],
+            files=[open("Greetings.pdf", "rb")],
+            metadata={
+                "custom_id": 1234,
+                "custom_text": "NDA #9",
+            },
+            signing_options=signing_options,
+            #field_options=field_options,
+            test_mode=True,
+        )
 
-    try:
-        response = signature_request_api.signature_request_send(data)
-        signature_request_id = response["signature_request"]["signature_request_id"]
-        pprint(response)
-    except ApiException as e:
-        print("Exception when calling Dropbox Sign API: %s\n" % e)
+        global signature_request_id
+
+        try:
+            response = signature_request_api.signature_request_send(data)
+            session['signature_request_id'] = response["signature_request"]["signature_request_id"]
+            pprint(response)
+        except ApiException as e:
+            print("Exception when calling Dropbox Sign API: %s\n" % e)
 
     #return f'Response for Dropbox Signature request API: {signature_request_id}'
 
@@ -240,20 +251,28 @@ def download_from_sign():
 
 @app.route('/process_download_from_sign', methods=['POST'])
 def process_download_from_sign():
-    try:
-        signature_request_id = '243c1ae3d46d3d81e0568ec6d76c0a186d2ad5c9'
-        response = signature_request_api.signature_request_files(signature_request_id, file_type="pdf")
-        open('signed-Greetings.pdf', 'wb').write(response.read())
-    except ApiException as e:
-        print("Exception when calling Dropbox Sign API: %s\n" % e)
-    return f"Success !"
+
+    configuration = Configuration(
+        # Configure HTTP basic authorization: api_key
+        username=session['user_input_dropbox_api_key'],
+    )
+    with ApiClient(configuration) as api_client:
+        signature_request_api = apis.SignatureRequestApi(api_client)
+
+        try:
+            #signature_request_id = '243c1ae3d46d3d81e0568ec6d76c0a186d2ad5c9'
+            response = signature_request_api.signature_request_files(session['signature_request_id'], file_type="pdf")
+            open('signed-Greetings.pdf', 'wb').write(response.read())
+        except ApiException as e:
+            print("Exception when calling Dropbox Sign API: %s\n" % e)
+        return f"Success !"
 
 if __name__ == '__main__':
 
-    with ApiClient(configuration) as api_client:
-        signature_request_api = apis.SignatureRequestApi(api_client)
+    #with ApiClient(configuration) as api_client:
+        #signature_request_api = apis.SignatureRequestApi(api_client)
         #app.run()
         #serve(app, host='127.0.0.1', port=8000)
-        serve(app, host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
+    serve(app, host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
 
 
